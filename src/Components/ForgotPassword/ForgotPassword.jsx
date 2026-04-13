@@ -2,7 +2,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { Context } from "../Provider/Provider";
 import { useContext, useState } from "react";
 import { sendPasswordResetEmail } from "firebase/auth";
-import { auth } from "../../Firebase/firebase.config";
+import { auth, firebaseConfigError } from "../../Firebase/firebase.config";
 
 const ForgotPassword = () => {
     const location = useLocation();
@@ -22,6 +22,12 @@ const ForgotPassword = () => {
     const handleResetPassword = async () => {
         if (!email) {
             setError("Please enter a valid email address.");
+            return;
+        }
+
+        if (!auth) {
+            setSuccess(false);
+            setError(firebaseConfigError || "Firebase is not configured.");
             return;
         }
 

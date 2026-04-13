@@ -14,8 +14,24 @@ const firebaseConfig = {
     appId: import.meta.env.VITE_appId,
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
+const requiredConfigKeys = ["apiKey", "authDomain", "projectId", "appId"];
+const missingConfigKeys = requiredConfigKeys.filter((key) => !firebaseConfig[key]);
+
+export const isFirebaseConfigured = missingConfigKeys.length === 0;
+export const firebaseConfigError = isFirebaseConfigured
+    ? ""
+    : `Missing Firebase environment variables: ${missingConfigKeys.join(", ")}`;
+
+let app = null;
+let auth = null;
+
+if (isFirebaseConfigured) {
+    app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
+} else {
+    console.warn(firebaseConfigError);
+}
+
+export { app, auth };
 
 

@@ -1,7 +1,7 @@
 /* eslint-disable react/prop-types */
 import { createContext, useEffect, useState } from "react";
 import { createUserWithEmailAndPassword, onAuthStateChanged, signInWithEmailAndPassword, signInWithPopup, signOut, updateProfile } from "firebase/auth";
-import { auth } from "../../Firebase/firebase.config";
+import { auth, firebaseConfigError } from "../../Firebase/firebase.config";
 import { GoogleAuthProvider } from "firebase/auth";
 import axios from "axios";
 
@@ -13,28 +13,40 @@ export const Provider = ({ children }) => {
     const [loading, setLoading] = useState(true);
     const [price, setprice] = useState(5000);  // Price for subscription
 
+    const authConfigError = () => new Error(firebaseConfigError || "Firebase is not configured.");
+
     // Register
     const handleRegister = (email, password) => {
+        if (!auth) return Promise.reject(authConfigError());
         return createUserWithEmailAndPassword(auth, email, password);
     };
 
     // Login
     const handleLogin = (email, password) => {
+        if (!auth) return Promise.reject(authConfigError());
         return signInWithEmailAndPassword(auth, email, password);
     };
 
     // Signout
     const handleLogOut = () => {
-        signOut(auth);
+        if (!auth) {
+            setUser(null);
+            setLoading(false);
+            return Promise.resolve();
+        }
+
+        return signOut(auth);
     };
 
     const handleGoogleLogin = () => {
+        if (!auth) return Promise.reject(authConfigError());
         setLoading(true);
         return signInWithPopup(auth, Googleprovider);
     }
 
     // Update Profile
     const manageProfile = (name, image) => {
+        if (!auth?.currentUser) return Promise.reject(authConfigError());
         return updateProfile(auth.currentUser, {
             displayName: name,
             photoURL: image,
@@ -50,6 +62,12 @@ export const Provider = ({ children }) => {
 
     // Observer
     useEffect(() => {
+        if (!auth) {
+            console.warn(firebaseConfigError);
+            setLoading(false);
+            return undefined;
+        }
+
         const unSubscribe = onAuthStateChanged(auth, async (currentUser) => {
             setLoading(true);
     
